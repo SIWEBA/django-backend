@@ -1,0 +1,40 @@
+site_name: SIWEBA Backend
+docs_dir: docs
+theme:
+  name: material
+  language: es
+  features:
+    - content.code.copy
+  palette:
+    # Modo Claro
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Cambiar a modo oscuro
+    # Modo Oscuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Cambiar a modo claro
+
+nav:
+  - Inicio: index.md
+  - Documentación Técnica:
+    - Cómo funciona: tecnica/como-funciona.md
+    - Cómo se actualiza: tecnica/actualizar.md
+    - Instalar TimescaleDB: tecnica/instalar-timescaledb.md
+    - Migraciones: tecnica/migraciones.md
+
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
