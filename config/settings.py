@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import parse_qs, unquote, urlparse
+
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -82,19 +85,42 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
+def get_database_config():
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        parsed_url = urlparse(database_url)
+        if parsed_url.scheme not in {'postgres', 'postgresql'}:
+            raise ImproperlyConfigured(
+                'DATABASE_URL debe usar el esquema postgres:// o postgresql://.'
+            )
+
+        query = parse_qs(parsed_url.query)
+        sslmode = os.getenv('DB_SSLMODE') or query.get('sslmode', ['require'])[0]
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': unquote(parsed_url.path.lstrip('/')),
+            'USER': unquote(parsed_url.username or ''),
+            'PASSWORD': unquote(parsed_url.password or ''),
+            'HOST': parsed_url.hostname or '',
+            'PORT': str(parsed_url.port or 5432),
+            'OPTIONS': {'sslmode': sslmode},
+        }
+
+    options = {}
+    if os.getenv('DB_SSLMODE'):
+        options['sslmode'] = os.environ['DB_SSLMODE']
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
+        'PORT': os.getenv('DB_PORT', '5432'),
+        'OPTIONS': options,
     }
-}
+
+
+DATABASES = {'default': get_database_config()}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
